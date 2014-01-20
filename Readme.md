@@ -29,6 +29,7 @@ Middleware package.json
 
 ```json
 {
+  "name": "mymiddleware",
   "optionalPeerDependencies": {
     "redis": "~0.9.0",
     "mysql": "~2.0.0"
@@ -40,27 +41,34 @@ Setting up and using a require-function
 
 ```javascript
 var optpeerdeps = require('optpeerdeps');
-var peerRequire = optpeerdeps.create(module);
+var requirePeer = optpeerdeps.register(module);
 
-var redis = peerRequire('redis');
+var redis = requirePeer('redis');
+```
+
+From another file, you can now easily use the middleware's require function for
+peers:
+
+```javascript
+var requirePeer = require('optpeerdeps').get('mymiddleware');
 ```
 
 ## Advanced usage
 
 ```javascript
 var optpeerdeps = require('optpeerdeps');
-var peerRequire = optpeerdeps.create(module, {
+var requirePeer = optpeerdeps.register(module, {
 	index: ['optionalPeerDependencies', 'devDependencies']
 });
 
 // require redis, but don't throw an error if the module is not found
 
-var redis = peerRequire('redis', { optional: true }); // returns undefined
+var redis = requirePeer('redis', { optional: true }); // returns undefined
 ```
 
 ## API
 
-**optpeerdeps.create(module, options)**
+**optpeerdeps.register(module, options)**
 
 The `module` argument must be the root module of the middleware. Its location
 is the basis for the search for `package.json`, which is to contain the peer
@@ -76,7 +84,7 @@ your package.json will be used to index.
 
 This function returns a `require` function, which has the following signature:
 
-**peerRequire(name, options)**
+**requirePeer(name, options)**
 
 The `name` argument is the name of one of your peer dependencies. It will be
 required and returned. The `options` object may contain one of the following:
