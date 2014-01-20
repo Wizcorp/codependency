@@ -50,7 +50,8 @@ From another file, you can now easily use the middleware's require function for
 peers:
 
 ```javascript
-var requirePeer = require('optpeerdeps').get('mymiddleware');
+var optpeerdeps = require('optpeerdeps');
+var requirePeer = optpeerdeps.get('mymiddleware');
 ```
 
 ## Advanced usage
