@@ -1,8 +1,12 @@
 {
   "name": "codependency",
+  "keywords": ["peer", "dependency", "dependencies", "require", "module", "semver"],
   "version": "0.1.0",
   "description": "Optional peer dependencies",
   "main": "index.js",
+  "dependencies": {
+    "semver": "2.2.1"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
