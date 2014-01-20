@@ -3,6 +3,18 @@ var fs = require('fs');
 var semver = require('semver');
 
 
+/**
+ * This does the peer-requiring work.
+ *
+ * @param {Object}  deps      A hash-map of all known peer-dependencies.
+ * @param {Module}  baseMod   The module from where we require.
+ * @param {string}  name      The name of the peer dependency to require.
+ * @param {Object}  [options] Options.
+ * @param {boolean} [options.optional] Return undefined if the dependency could not be found.
+ * @param {boolean} [options.dontThrow] Suppresses all possible errors.
+ * @return {Object}           The required module's exports object.
+ */
+
 function realRequire(deps, baseMod, name, options) {
 	var range = deps[name];
 	var mod;
@@ -57,6 +69,15 @@ function realRequire(deps, baseMod, name, options) {
 }
 
 
+/**
+ * Scans the disk for a package.json file. The given module's location and its
+ * parent directories are scanned until their package.json file is found, or
+ * until the file system's root folder is reached.
+ *
+ * @param {Module} baseModule The module for which to find a package file.
+ * @return {Object}           The parsed package.json file.
+ */
+
 exports.findPackage = function (baseModule) {
 	var lastDir = baseModule.filename;
 	var pkgPath;
@@ -84,6 +105,15 @@ exports.findPackage = function (baseModule) {
 	return require(pkgPath);
 };
 
+
+/**
+ * Extracts all dependencies and their versions from a parsed package.json
+ * definition.
+ *
+ * @param {Object} pkg       The parsed package.json contents.
+ * @param {string} [entries] The list of properties to scan.
+ * @return {Object}          A dependency-name/version-range hash map.
+ */
 
 exports.extractDeps = function (pkg, entries) {
 	var fullDeps = {};
@@ -116,7 +146,8 @@ exports.extractDeps = function (pkg, entries) {
 
 
 /**
- * Creates an OptPeerDeps instance based on the package.json at the given path.
+ * Creates an peerRequire function based on the package.json requirements for
+ * the given middleware module.
  *
  * @param {Module} baseModule          The module that hosts the optionalPeerDependencies.
  * @param {Object} [options]           Options object

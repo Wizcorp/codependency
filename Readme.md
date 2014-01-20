@@ -65,7 +65,7 @@ var redis = peerRequire('redis', { optional: true }); // returns undefined
 The `module` argument must be the root module of the middleware. Its location
 is the basis for the search for `package.json`, which is to contain the peer
 dependencies hashmap. Its parent will be used to require from. This allows you
-to work on middleware development, while symlinking to it from your an end-user
+to work on middleware development, while symlinking to it from your end-user
 project. For example:
 
 	/home/bob/todolist/node_modules/mymiddleware -> /home/bob/mymiddleware
