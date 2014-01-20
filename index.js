@@ -83,7 +83,7 @@ exports.findPackage = function (baseModule) {
 	var pkgPath;
 
 	do {
- 		var dir = path.dirname(lastDir);
+		var dir = path.dirname(lastDir);
 
 		if (!dir || dir === lastDir) {
 			throw new Error('No package.json found');
