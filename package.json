@@ -1,0 +1,12 @@
+{
+  "name": "optpeerdeps",
+  "version": "0.1.0",
+  "description": "Optional peer dependencies",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": "",
+  "author": "Ron Korving <r.korving@wizcorp.jp>",
+  "license": "MIT"
+}
