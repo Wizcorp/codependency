@@ -6,7 +6,7 @@ Node's peer dependencies are automatically installed when the middleware that
 refers to them is installed. Just because your middleware supports 16 database
 systems, doesn't mean your end user wants to install all those drivers.
 
-For those cases, you'll want to use `optpeerdeps`. Simply add your peer
+For those cases, you'll want to use `codependency`. Simply add your peer
 dependencies to your `package.json`, in a field called
 `"optionalPeerDependencies"` and use the `require()` function from this
 library. It will give you:
@@ -18,7 +18,7 @@ library. It will give you:
 ## Installation
 
 ```sh
-npm install -s optpeerdeps
+npm install -s codependency
 ```
 
 ## Usage
@@ -40,8 +40,8 @@ Middleware package.json
 Setting up and using a require-function
 
 ```javascript
-var optpeerdeps = require('optpeerdeps');
-var requirePeer = optpeerdeps.register(module);
+var codependency = require('codependency');
+var requirePeer = codependency.register(module);
 
 var redis = requirePeer('redis');
 ```
@@ -50,8 +50,8 @@ From another file, you can now easily use the middleware's require function for
 peers:
 
 ```javascript
-var optpeerdeps = require('optpeerdeps');
-var requirePeer = optpeerdeps.get('mymiddleware');
+var codependency = require('codependency');
+var requirePeer = codependency.get('mymiddleware');
 
 var redis = requirePeer('redis');
 ```
@@ -59,8 +59,8 @@ var redis = requirePeer('redis');
 ## Advanced usage
 
 ```javascript
-var optpeerdeps = require('optpeerdeps');
-var requirePeer = optpeerdeps.register(module, {
+var codependency = require('codependency');
+var requirePeer = codependency.register(module, {
 	index: ['optionalPeerDependencies', 'devDependencies']
 });
 
@@ -71,7 +71,7 @@ var redis = requirePeer('redis', { optional: true }); // returns undefined
 
 ## API
 
-**optpeerdeps.register(module, options)**
+**codependency.register(module, options)**
 
 The `module` argument must be the root module of the middleware. Its location
 is the basis for the search for `package.json`, which is to contain the peer
