@@ -52,6 +52,8 @@ peers:
 ```javascript
 var optpeerdeps = require('optpeerdeps');
 var requirePeer = optpeerdeps.get('mymiddleware');
+
+var redis = requirePeer('redis');
 ```
 
 ## Advanced usage
