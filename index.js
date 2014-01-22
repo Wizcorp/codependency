@@ -29,11 +29,13 @@ function realRequire(deps, baseMod, name, options) {
 				return;
 			}
 
-			var cmd = 'npm install -s ' + name;
+			var cmd = 'npm install ' + name;
 
 			if (range !== '*') {
 				cmd += "@'" + range + "'";
 			}
+
+			cmd += ' --save';
 
 			throw new Error(
 				'Module "' + name + '" not found. Please run: ' + cmd
@@ -207,7 +209,7 @@ exports.register = function (baseModule, options) {
 
 	function requirePeer(name, options) {
 		return realRequire(deps, baseModule, name, options || {});
-	};
+	}
 
 	if (pkg.name) {
 		middlewares[pkg.name] = requirePeer;
