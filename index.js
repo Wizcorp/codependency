@@ -19,15 +19,35 @@ function realRequire(deps, baseMod, name, options) {
 	var range = deps[name];
 	var mod;
 
-	if (options.dontThrow || options.optional) {
-		try {
-			mod = baseMod.require(name);
-		} catch (error) {
-			// ignore error
+	try {
+		mod = baseMod.require(name);
+	} catch (error) {
+		// deal with non-existence
+
+		if (error.code === 'MODULE_NOT_FOUND') {
+			if (options.optional) {
+				return;
+			}
+
+			var cmd = 'npm install -s ' + name;
+
+			if (range !== '*') {
+				cmd += "@'" + range + "'";
+			}
+
+			throw new Error(
+				'Module "' + name + '" not found. Please run: ' + cmd
+			);
+		}
+
+		// there was an error in the module itself
+		// rethrow it if allowed.
+
+		if (options.dontThrow) {
 			return;
 		}
-	} else {
-		mod = baseMod.require(name);
+
+		throw error;
 	}
 
 	if (!range) {
@@ -44,8 +64,7 @@ function realRequire(deps, baseMod, name, options) {
 		}
 
 		throw new Error(
-			'Package "' + name + '" has no version information in ' +
-			pkgPath
+			'Module "' + name + '" has no version information in ' + pkgPath
 		);
 	}
 
@@ -55,8 +74,7 @@ function realRequire(deps, baseMod, name, options) {
 		}
 
 		throw new TypeError(
-			'Version in package "' + name + '" ' +
-			'is not a string.'
+			'Version of module "' + name + '" is not a string.'
 		);
 	}
 
@@ -66,8 +84,8 @@ function realRequire(deps, baseMod, name, options) {
 		}
 
 		throw new Error(
-			'Package "' + name + '" of version ' + pkg.version +
-			' does not satisfy requirement: ' + range
+			'Version ' + pkg.version + ' of module "' + name + '" ' +
+			'does not satisfy requirement: ' + range
 		);
 	}
 
@@ -139,15 +157,14 @@ exports.extractDeps = function (pkg, index) {
 			var name = names[j];
 			var range = deps[name];
 
-			var sanitised = semver.validRange(range);
-			if (!sanitised) {
+			if (!semver.validRange(range)) {
 				throw new Error(
 					'Version range ' + range + ' of dependency ' +
 					'"' + name + '" is not a valid range.'
 				);
 			}
 
-			fullDeps[name] = sanitised;
+			fullDeps[name] = range;
 		}
 	}
 
