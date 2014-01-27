@@ -1,7 +1,7 @@
 {
   "name": "codependency",
   "keywords": ["peer", "dependency", "dependencies", "require", "module", "semver"],
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Optional peer dependencies",
   "main": "index.js",
   "dependencies": {
