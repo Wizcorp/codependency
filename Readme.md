@@ -18,7 +18,7 @@ library. It will give you:
 ## Installation
 
 ```sh
-npm install -s codependency
+npm install codependency
 ```
 
 ## Usage
