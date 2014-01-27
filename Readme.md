@@ -2,18 +2,18 @@
 
 ## Description
 
-Node's peer dependencies are automatically installed when the middleware that
-refers to them is installed. Just because your middleware supports 16 database
-systems, doesn't mean your end user wants to install all those drivers.
+Node's peer dependencies are automatically installed when the middleware that refers to them is
+installed. Just because your middleware supports 16 database systems, doesn't mean your end user
+wants to install all those drivers.
 
-For those cases, you'll want to use `codependency`. Simply add your peer
-dependencies to your `package.json`, in a field called
-`"optionalPeerDependencies"` and use the `require()` function from this
-library. It will give you:
+For those cases, you'll want to use `codependency`. Simply add your peer dependencies to your
+`package.json` file, in a field called `"optionalPeerDependencies"` and use the `require()`
+function from this library. It will give you:
 
 * automatic semver validation.
-* optionality (it won't throw if you don't want it to).
-* a developer-friendly environment.
+* instructive error reporting for your end user.
+* optionality (it won't throw errors if you don't want it to).
+* a developer-friendly environment (allows symlinking to your middleware).
 
 ## Installation
 
@@ -37,7 +37,7 @@ Middleware package.json
 }
 ```
 
-Setting up and using a require-function
+Setting up and using a require-function from the middleware
 
 ```javascript
 var codependency = require('codependency');
@@ -46,8 +46,7 @@ var requirePeer = codependency.register(module);
 var redis = requirePeer('redis');
 ```
 
-From another file, you can now easily use the middleware's require function for
-peers:
+From another file, you can now easily use the middleware's require function for peers:
 
 ```javascript
 var codependency = require('codependency');
@@ -73,28 +72,34 @@ var redis = requirePeer('redis', { optional: true }); // returns undefined
 
 **codependency.register(module, options)**
 
-The `module` argument must be the root module of the middleware. Its location
-is the basis for the search for `package.json`, which is to contain the peer
-dependencies hashmap. Its parent will be used to require from. This allows you
-to work on middleware development, while symlinking to it from your end-user
-project. For example:
+The `module` argument must be the root module of the middleware. Its location is the basis for the
+search for `package.json`, which is to contain the peer dependencies hashmap. Its parent will be
+used to require from. This allows you to work on middleware development, while symlinking to it
+from your end-user project. For example:
 
 	/home/bob/todolist/node_modules/mymiddleware -> /home/bob/mymiddleware
 
-The `options` object may contain an `index` property, which defaults to the
-array `["optionalPeerDependencies"]`. Override it to change which properties of
-your package.json will be used to index.
+The `options` object may contain an `index` property, which defaults to the array
+["optionalPeerDependencies"]. Override it to change which properties of your package.json will be
+used to index.
 
 This function returns a `require` function, which has the following signature:
 
 **requirePeer(name, options)**
 
-The `name` argument is the name of one of your peer dependencies. It will be
-required and returned. The `options` object may contain one of the following:
+The `name` argument is the name of one of your peer dependencies. It will be required and returned.
+The `options` object may contain one of the following:
 
-* optional: boolean (default: false), in order to not throw an error if the
-  module cannot be found.
-* dontThrow: boolean (default: false), in order to not throw an error if the
-  module's version did not satisfy the requirement or something else went wrong
-  during the require.
+* optional: boolean (default: false), in order to not throw an error if the module cannot be found.
+* dontThrow: boolean (default: false), in order to not throw an error if the module's version did
+  not satisfy the requirement or something else went wrong during the require.
+
+## Errors
+
+During a peer-require, a user may encounter the following exceptions:
+
+* Module "redis" required by "mymiddleware" not found. Please run: npm install redis@'~0.10.0' --save
+* Module "mysql" required by "mymiddleware" has no version information in "mysql/package.json".
+* Version of module "couchbase" required by "mymiddleware" is not a string (found instead: number).
+* Version "2.3.0" of module "zmq" required by "mymiddleware" does not satisfy required range "~2.5.0".
 
