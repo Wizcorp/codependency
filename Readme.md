@@ -106,7 +106,7 @@ following signature:
 {
   "supportedRange": "2.5.1",
   "installedVersion": "2.5.1",
-  "exists": true,
+  "isInstalled": true,
   "isValid": true,
   "pkgPath": "zmq/package.json"
 }
@@ -114,7 +114,7 @@ following signature:
 
 * `supportedRange` is the range that the middleware explicitly supports.
 * `installedVersion` is the version that is currently installed (null if none).
-* `exists` indicates if the dependency has been installed.
+* `isInstalled` indicates if the dependency has been installed.
 * `isValid` indicates if the installed version is valid within the supported range.
 * `pkgPath` is a path to package.json of the dependency, used internally by `requirePeer()`.
 

@@ -20,7 +20,7 @@ function realResolve(deps, baseMod, name) {
 		supportedRange: range || null,
 		installedVersion: null,
 		isValid: null,
-		exists: null,
+		isInstalled: null,
 		pkgPath: pathJoin(name, 'package.json')
 	};
 
@@ -29,7 +29,7 @@ function realResolve(deps, baseMod, name) {
 	try {
 		pkg = baseMod.require(resolved.pkgPath);
 
-		resolved.exists = true;
+		resolved.isInstalled = true;
 
 		if (typeof pkg.version === 'string') {
 			resolved.installedVersion = pkg.version;
@@ -41,7 +41,7 @@ function realResolve(deps, baseMod, name) {
 			}
 		}
 	} catch (error) {
-		resolved.exists = (error.code !== 'MODULE_NOT_FOUND');
+		resolved.isInstalled = (error.code !== 'MODULE_NOT_FOUND');
 		resolved.isValid = false;
 	}
 
@@ -66,17 +66,17 @@ function realRequire(deps, baseMod, middlewareName, name, options) {
 	options = options || {};
 
 	var resolved = realResolve(deps, baseMod, name);
-	var exists = resolved.exists;
+	var isInstalled = resolved.isInstalled;
 	var range = resolved.supportedRange || '*';
 
 	var mod;
 
-	if (exists) {
+	if (isInstalled) {
 		try {
 			mod = baseMod.require(name);
 		} catch (error) {
 			if (error.code === 'MODULE_NOT_FOUND') {
-				exists = false;
+				isInstalled = false;
 			} else {
 				// there was an error in the module itself
 				// rethrow it if allowed.
@@ -90,7 +90,7 @@ function realRequire(deps, baseMod, middlewareName, name, options) {
 		}
 	}
 
-	if (!exists) {
+	if (!isInstalled) {
 		if (options.optional) {
 			return;
 		}
