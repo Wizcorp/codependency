@@ -5,6 +5,51 @@ var semver = require('semver');
 
 
 /**
+ * Resolves a peer dependency
+ *
+ * @param {Object}  deps     A hash-map of all known peer-dependencies.
+ * @param {Module}  baseMod  The middleware module from where we resolve.
+ * @param {string}  name     The name of the peer dependency to resolve.
+ * @returns {Object}         Information about the peer dependency.
+ */
+
+function realResolve(deps, baseMod, name) {
+	var range = deps[name];
+
+	var resolved = {
+		supportedRange: range || null,
+		installedVersion: null,
+		isValid: null,
+		isInstalled: null,
+		pkgPath: pathJoin(name, 'package.json')
+	};
+
+	var pkg;
+
+	try {
+		pkg = baseMod.require(resolved.pkgPath);
+
+		resolved.isInstalled = true;
+
+		if (typeof pkg.version === 'string') {
+			resolved.installedVersion = pkg.version;
+
+			if (range) {
+				resolved.isValid = semver.satisfies(resolved.installedVersion, range);
+			} else {
+				resolved.isValid = true;
+			}
+		}
+	} catch (error) {
+		resolved.isInstalled = (error.code !== 'MODULE_NOT_FOUND');
+		resolved.isValid = false;
+	}
+
+	return resolved;
+}
+
+
+/**
  * This does the peer-requiring work.
  *
  * @param {Object}  deps                A hash-map of all known peer-dependencies.
@@ -18,84 +63,86 @@ var semver = require('semver');
  */
 
 function realRequire(deps, baseMod, middlewareName, name, options) {
-	var range = deps[name];
-	var mod;
-
-	// defaults:
-
 	options = options || {};
 
-	try {
-		mod = baseMod.require(name);
-	} catch (error) {
-		// deal with non-existence
+	var resolved = realResolve(deps, baseMod, name);
+	var isInstalled = resolved.isInstalled;
+	var range = resolved.supportedRange || '*';
 
-		if (error.code === 'MODULE_NOT_FOUND') {
-			if (options.optional) {
-				return;
+	var mod;
+
+	if (isInstalled) {
+		try {
+			mod = baseMod.require(name);
+		} catch (error) {
+			if (error.code === 'MODULE_NOT_FOUND') {
+				isInstalled = false;
+			} else {
+				// there was an error in the module itself
+				// rethrow it if allowed.
+
+				if (options.dontThrow) {
+					return;
+				}
+
+				throw error;
 			}
-
-			var cmd = 'npm install ' + name;
-
-			if (range && range !== '*') {
-				cmd += "@'" + range + "'";
-			}
-
-			cmd += ' --save';
-
-			throw new Error(
-				'Module "' + name + '" required by "' + middlewareName + '" not found. ' +
-				'Please run: ' + cmd
-			);
 		}
+	}
 
-		// there was an error in the module itself
-		// rethrow it if allowed.
-
-		if (options.dontThrow) {
+	if (!isInstalled) {
+		if (options.optional) {
 			return;
 		}
 
-		throw error;
+		var cmd = 'npm install ' + name;
+
+		if (range !== '*') {
+			cmd += "@'" + range + "'";
+		}
+
+		cmd += ' --save';
+
+		throw new Error(
+			'Module "' + name + '" required by "' + middlewareName + '" not found. ' +
+			'Please run: ' + cmd
+		);
 	}
 
-	if (!range) {
-		// no restriction
+	if (range === '*') {
+		// no restriction on version
 		return mod;
 	}
 
-	var pkgPath = pathJoin(name, 'package.json');
-
-	var pkg = baseMod.require(pkgPath);
-	if (!pkg.version) {
+	if (!resolved.installedVersion) {
 		if (options.dontThrow) {
 			return;
 		}
 
 		throw new Error(
 			'Module "' + name + '" required by "' + middlewareName + '" has no version ' +
-			'information in "' + pkgPath + '".'
+			'information in "' + resolved.pkgPath + '".'
 		);
 	}
 
-	if (typeof pkg.version !== 'string') {
+	if (typeof resolved.installedVersion !== 'string') {
 		if (options.dontThrow) {
 			return;
 		}
 
 		throw new TypeError(
 			'Version of module "' + name + '" required by "' + middlewareName + '" is not a ' +
-			'string (found instead: ' + (typeof pkg.version) + ').'
+			'string (found instead: ' + (typeof resolved.installedVersion) + ').'
 		);
 	}
 
-	if (!semver.satisfies(pkg.version, range)) {
+	if (!resolved.isValid) {
 		if (options.dontThrow) {
 			return;
 		}
 
 		throw new Error(
-			'Version "' + pkg.version + '" of module "' + name + '" required by ' +
+			'Version "' + resolved.installedVersion + '" of module "' + name + '" required by ' +
 			'"' + middlewareName + '" does not satisfy required range "' + range + '".'
 		);
 	}
@@ -234,6 +281,10 @@ exports.register = function (baseModule, options) {
 	function requirePeer(name, options) {
 		return realRequire(deps, baseModule, middlewareName, name, options);
 	}
+
+	requirePeer.resolve = function (name) {
+		return realResolve(deps, baseModule, name);
+	};
 
 	middlewares[middlewareName] = requirePeer;
 

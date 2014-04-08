@@ -94,6 +94,30 @@ The `options` object may contain one of the following:
 * dontThrow: boolean (default: false), in order to not throw an error if the module's version did
   not satisfy the requirement or something else went wrong during the require.
 
+It also has a resolve method which can give you information about a peer dependency before requiring
+it.
+
+**requirePeer.resolve(name)**
+
+The `name` argument is the name of one of your peer dependencies. The returned object has the
+following signature:
+
+```json
+{
+  "supportedRange": "2.5.1",
+  "installedVersion": "2.5.1",
+  "isInstalled": true,
+  "isValid": true,
+  "pkgPath": "zmq/package.json"
+}
+```
+
+* `supportedRange` is the range that the middleware explicitly supports.
+* `installedVersion` is the version that is currently installed (null if none).
+* `isInstalled` indicates if the dependency has been installed.
+* `isValid` indicates if the installed version is valid within the supported range.
+* `pkgPath` is a path to package.json of the dependency, used internally by `requirePeer()`.
+
 ## Errors
 
 During a peer-require, a user may encounter the following exceptions:
