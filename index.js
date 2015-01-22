@@ -75,7 +75,9 @@ function realRequire(deps, baseMod, middlewareName, name, options) {
 		try {
 			mod = baseMod.require(name);
 		} catch (error) {
-			if (error.code === 'MODULE_NOT_FOUND') {
+			if (error.code === 'MODULE_NOT_FOUND' &&
+				error.message.indexOf(mod) > -1
+			) {
 				isInstalled = false;
 			} else {
 				// there was an error in the module itself
