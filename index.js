@@ -14,6 +14,12 @@ var semver = require('semver');
  */
 
 function realResolve(deps, baseMod, name) {
+	var pos;
+
+	if (~(pos = name.indexOf('/'))) {
+		name = name.slice(0, pos);
+	}
+
 	var range = deps[name];
 
 	var resolved = {
