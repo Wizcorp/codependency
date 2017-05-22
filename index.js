@@ -1,3 +1,5 @@
+'use strict';
+
 var dirname = require('path').dirname;
 var pathJoin = require('path').join;
 var exists = require('fs').existsSync;
@@ -25,8 +27,6 @@ function isRealDepInPackage(pkg, name) {
 }
 
 
-
-
 /**
  * Resolves a peer dependency
  *
@@ -38,9 +38,8 @@ function isRealDepInPackage(pkg, name) {
  */
 
 function realResolve(deps, baseMod, basePkg, name) {
-	var pos;
-
-	if (~(pos = name.indexOf('/'))) {
+	var pos = name.indexOf('/');
+	if (pos !== -1) {
 		name = name.slice(0, pos);
 	}
 
