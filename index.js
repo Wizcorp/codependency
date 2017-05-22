@@ -4,16 +4,40 @@ var exists = require('fs').existsSync;
 var semver = require('semver');
 
 
+function isRealDep(dependencies, name) {
+	if (!dependencies) {
+		return false;
+	}
+
+	if (!dependencies[name]) {
+		return false;
+	}
+
+	return true;
+}
+
+function isRealDepInPackage(pkg, name) {
+	return (
+		isRealDep(pkg.dependencies, name) ||
+		isRealDep(pkg.devDependencies, name) ||
+		isRealDep(pkg.optionalDependencies, name)
+	);
+}
+
+
+
+
 /**
  * Resolves a peer dependency
  *
  * @param {Object}  deps     A hash-map of all known peer-dependencies.
  * @param {Module}  baseMod  The middleware module from where we resolve.
+ * @param {Object}  basePkg  The parsed package.json of the base module.
  * @param {string}  name     The name of the peer dependency to resolve.
  * @returns {Object}         Information about the peer dependency.
  */
 
-function realResolve(deps, baseMod, name) {
+function realResolve(deps, baseMod, basePkg, name) {
 	var pos;
 
 	if (~(pos = name.indexOf('/'))) {
@@ -29,6 +53,14 @@ function realResolve(deps, baseMod, name) {
 		isInstalled: null,
 		pkgPath: pathJoin(name, 'package.json')
 	};
+
+	// if the dependency is never mentioned in package.json of the app, we consider it not-installed
+
+	if (!isRealDepInPackage(basePkg, name)) {
+		resolved.isInstalled = false;
+		resolved.isValid = false;
+		return resolved;
+	}
 
 	var pkg;
 
@@ -60,6 +92,7 @@ function realResolve(deps, baseMod, name) {
  *
  * @param {Object}  deps                A hash-map of all known peer-dependencies.
  * @param {Module}  baseMod             The middleware module from where we require.
+ * @param {Object}  basePkg             The parsed package.json of the base module.
  * @param {string}  middlewareName      The name of the middleware that is requiring.
  * @param {string}  name                The name of the peer dependency to require.
  * @param {Object}  [options]           Options.
@@ -68,10 +101,10 @@ function realResolve(deps, baseMod, name) {
  * @returns {Object}                    The required module's exports object.
  */
 
-function realRequire(deps, baseMod, middlewareName, name, options) {
+function realRequire(deps, baseMod, basePkg, middlewareName, name, options) {
 	options = options || {};
 
-	var resolved = realResolve(deps, baseMod, name);
+	var resolved = realResolve(deps, baseMod, basePkg, name);
 	var isInstalled = resolved.isInstalled;
 	var range = resolved.supportedRange || '*';
 
@@ -284,14 +317,18 @@ exports.register = function (baseModule, options) {
 
 	baseModule = baseModule.parent;
 
+	// find the package.json belonging to the application
+
+	var basePkg = exports.findPackage(baseModule);
+
 	// create and return a requirePeer function
 
 	function requirePeer(name, options) {
-		return realRequire(deps, baseModule, middlewareName, name, options);
+		return realRequire(deps, baseModule, basePkg, middlewareName, name, options);
 	}
 
 	requirePeer.resolve = function (name) {
-		return realResolve(deps, baseModule, name);
+		return realResolve(deps, baseModule, basePkg, name);
 	};
 
 	middlewares[middlewareName] = requirePeer;
