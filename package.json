@@ -24,6 +24,7 @@
   "author": "Ron Korving <rkorving@wizcorp.jp>",
   "license": "MIT",
   "devDependencies": {
-    "eslint": "^3.19.0"
+    "eslint": "^3.19.0",
+    "pre-commit": "^1.2.2"
   }
 }
