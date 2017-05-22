@@ -196,11 +196,12 @@ function realRequire(deps, baseMod, basePkg, middlewareName, name, options) {
  * are scanned until their package.json file is found, or until the file system's root folder is
  * reached.
  *
- * @param {Module} baseModule The module for which to find a package file.
- * @returns {Object}          The parsed package.json file.
+ * @param {Module} baseModule    The module for which to find a package file.
+ * @param {boolean} strictCheck  Whether or not baseModule.exports must match require(packageJsonPath).
+ * @returns {Object}             The parsed package.json file.
  */
 
-exports.findPackage = function (baseModule) {
+exports.findPackage = function (baseModule, strictCheck) {
 	var lastDir = baseModule.filename;
 	var pkgPath;
 
@@ -218,7 +219,7 @@ exports.findPackage = function (baseModule) {
 
 	// make sure that the package.json we found really is the one we need
 
-	if (require(dirname(pkgPath)) !== baseModule.exports) {
+	if (strictCheck && require(dirname(pkgPath)) !== baseModule.exports) {
 		throw new Error(
 			'No package.json found that resolves to "' + baseModule.filename + '" ' +
 			'(found instead: "' + dirname(pkgPath) + '").'
@@ -235,7 +236,7 @@ exports.findPackage = function (baseModule) {
  * Extracts all dependencies and their versions from a parsed package.json definition.
  *
  * @param {Object} pkg     The parsed package.json contents.
- * @param {string} [index] The list of properties to scan.
+ * @param {string[]} index The list of properties to scan.
  * @returns {Object}       A dependency-name/version-range hash map.
  */
 
@@ -289,7 +290,7 @@ exports.register = function (baseModule, options) {
 
 	// find the nearest package.json
 
-	var pkg = exports.findPackage(baseModule);
+	var pkg = exports.findPackage(baseModule, true);
 
 	// decide on a name for this middleware
 
@@ -318,7 +319,7 @@ exports.register = function (baseModule, options) {
 
 	// find the package.json belonging to the application
 
-	var basePkg = exports.findPackage(baseModule);
+	var basePkg = exports.findPackage(baseModule, false);
 
 	// create and return a requirePeer function
 
@@ -347,4 +348,3 @@ exports.register = function (baseModule, options) {
 exports.get = function (middlewareName) {
 	return middlewares[middlewareName];
 };
-
