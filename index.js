@@ -290,7 +290,7 @@ exports.register = function (baseModule, options) {
 
 	// find the nearest package.json
 
-	var pkg = exports.findPackage(baseModule, true);
+	var pkg = exports.findPackage(baseModule, options.strictCheck !== false);
 
 	// decide on a name for this middleware
 
