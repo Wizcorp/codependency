@@ -315,7 +315,7 @@ exports.register = function (baseModule, options) {
 
 	// change the baseModule to its own parent, where we'll be requiring from
 
-	baseModule = baseModule.parent;
+	baseModule = baseModule.parent.require ? baseModule.parent : baseModule;
 
 	// find the package.json belonging to the application
 
