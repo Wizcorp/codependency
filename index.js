@@ -301,10 +301,7 @@ exports.register = function (baseModule, options) {
 	}
 
 	if (middlewares.hasOwnProperty(middlewareName)) {
-		throw new Error(
-			'A middleware with name "' + middlewareName + '" has already ' +
-			'been registered.'
-		);
+		return middlewares[ middlewareName ];
 	}
 
 	// create a dependency list
