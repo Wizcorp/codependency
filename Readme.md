@@ -83,6 +83,9 @@ The `options` object may contain an `index` property, which defaults to the arra
 ["optionalPeerDependencies"]. Override it to change which properties of your package.json will be
 used to index.
 
+If the `module` argument is not the root module you may set the `options.strictCheck` property to `false`
+to search for `package.json` in a parent directory.
+
 This function returns a `require` function, which has the following signature:
 
 **requirePeer(name, options)**

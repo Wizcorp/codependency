@@ -276,13 +276,15 @@ var middlewares = {};
  * Creates a require function for peer dependencies based on the package.json requirements for the
  * given middleware module.
  *
- * @param {Module}   baseModule      The module that hosts the dependencies.
- * @param {Object}   [options]       Options object
- * @param {string[]} [options.index] Which dependencies to evaluate.
- *                                   Default value: ["optionalPeerDependencies"]
- * @param {string}   [options.name]  A unique name to use for this middleware.
- *                                   Default value is the "name" field from package.json.
- * @returns {function}               The generated require function.
+ * @param {Module}   baseModule            The module that hosts the dependencies.
+ * @param {Object}   [options]             Options object
+ * @param {string[]} [options.index]       Which dependencies to evaluate.
+ *                                         Default value: ["optionalPeerDependencies"]
+ * @param {string}   [options.name]        A unique name to use for this middleware.
+ *                                         Default value is the "name" field from package.json.
+ * @param {boolean}  [options.strictCheck] Check for `package.json` in base module only
+                                           Default value: true
+ * @returns {function}                     The generated require function.
  */
 
 exports.register = function (baseModule, options) {
@@ -290,7 +292,7 @@ exports.register = function (baseModule, options) {
 
 	// find the nearest package.json
 
-	var pkg = exports.findPackage(baseModule, true);
+	var pkg = exports.findPackage(baseModule, options.strictCheck !== false);
 
 	// decide on a name for this middleware
 
