@@ -40,7 +40,7 @@ function isRealDepInPackage(pkg, name) {
 function realResolve(deps, baseMod, basePkg, name) {
 	var pos = name.indexOf('/');
 	if (pos !== -1) {
-		name = name.slice(0, pos);
+		name = name.replace(/(@[^\/]+\/)?([^\/]+).*/, '$1$2');
 	}
 
 	var range = deps[name];
