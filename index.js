@@ -26,6 +26,13 @@ function isRealDepInPackage(pkg, name) {
 	);
 }
 
+function logWarning(options, message) {
+	if (typeof options.onWarning !== 'function') {
+		return;
+	}
+
+	options.onWarning(message);
+}
 
 /**
  * Resolves a peer dependency
@@ -95,6 +102,7 @@ function realResolve(deps, baseMod, basePkg, name) {
  * @param {string}  middlewareName      The name of the middleware that is requiring.
  * @param {string}  name                The name of the peer dependency to require.
  * @param {Object}  [options]           Options.
+ * @param {(message: string) => void} [options.onWarning] Function to be executed when an error event occurs.
  * @param {boolean} [options.optional]  Return undefined if dep doesn't exist.
  * @param {boolean} [options.dontThrow] Suppresses all possible errors.
  * @returns {Object}                    The required module's exports object.
@@ -118,6 +126,8 @@ function realRequire(deps, baseMod, basePkg, middlewareName, name, options) {
 			) {
 				isInstalled = false;
 			} else {
+				logWarning(options, error.message);
+
 				// there was an error in the module itself
 				// rethrow it if allowed.
 
@@ -131,10 +141,6 @@ function realRequire(deps, baseMod, basePkg, middlewareName, name, options) {
 	}
 
 	if (!isInstalled) {
-		if (options.optional) {
-			return;
-		}
-
 		var cmd = 'npm install ' + name;
 
 		if (range !== '*') {
@@ -143,10 +149,14 @@ function realRequire(deps, baseMod, basePkg, middlewareName, name, options) {
 
 		cmd += ' --save';
 
-		throw new Error(
-			'Module "' + name + '" required by "' + middlewareName + '" not found. ' +
-			'Please run: ' + cmd
-		);
+		const notInstalledMessage = `Module "${name}" required by "${middlewareName}" not found. Please run: ${cmd}`;
+		logWarning(options, notInstalledMessage);
+
+		if (options.optional || options.dontThrow) {
+			return;
+		}
+
+		throw new Error(notInstalledMessage);
 	}
 
 	if (range === '*') {
@@ -155,36 +165,39 @@ function realRequire(deps, baseMod, basePkg, middlewareName, name, options) {
 	}
 
 	if (!resolved.installedVersion) {
+		const noVersionMessage = `Module "${name}" required by "${middlewareName}" has no version information ` +
+			`in "${resolved.pkgPath}".`;
+		logWarning(options, noVersionMessage);
+
 		if (options.dontThrow) {
 			return;
 		}
 
-		throw new Error(
-			'Module "' + name + '" required by "' + middlewareName + '" has no version ' +
-			'information in "' + resolved.pkgPath + '".'
-		);
+		throw new Error(noVersionMessage);
 	}
 
 	if (typeof resolved.installedVersion !== 'string') {
+		const incorrectTypeMessage = `Version of module "${name}" required by "${middlewareName}" is not a string ` +
+			`(found instead: ${typeof resolved.installedVersion}).`;
+		logWarning(incorrectTypeMessage);
+
 		if (options.dontThrow) {
 			return;
 		}
 
-		throw new TypeError(
-			'Version of module "' + name + '" required by "' + middlewareName + '" is not a ' +
-			'string (found instead: ' + (typeof resolved.installedVersion) + ').'
-		);
+		throw new TypeError(incorrectTypeMessage);
 	}
 
 	if (!resolved.isValid) {
+		const invalidVersionMessage = `Version "${resolved.installedVersion}" of module "${name}" required by ` +
+			`"${middlewareName}" does not satisfy required range "${range}".`;
+		logWarning(invalidVersionMessage);
+
 		if (options.dontThrow) {
 			return;
 		}
 
-		throw new Error(
-			'Version "' + resolved.installedVersion + '" of module "' + name + '" required by ' +
-			'"' + middlewareName + '" does not satisfy required range "' + range + '".'
-		);
+		throw new Error(invalidVersionMessage);
 	}
 
 	return mod;
@@ -282,6 +295,7 @@ var middlewares = {};
  *                                         Default value: ["optionalPeerDependencies"]
  * @param {string}   [options.name]        A unique name to use for this middleware.
  *                                         Default value is the "name" field from package.json.
+ * @param {(message: string) => void} [options.onWarning] Function to be executed when an error event occurs.
  * @param {boolean}  [options.strictCheck] Check for `package.json` in base module only
                                            Default value: true
  * @returns {function}                     The generated require function.
@@ -303,7 +317,7 @@ exports.register = function (baseModule, options) {
 	}
 
 	if (middlewares.hasOwnProperty(middlewareName)) {
-		return middlewares[ middlewareName ];
+		return middlewares[middlewareName];
 	}
 
 	// create a dependency list
@@ -322,7 +336,19 @@ exports.register = function (baseModule, options) {
 
 	// create and return a requirePeer function
 
+	const { onWarning } = options;
+
 	function requirePeer(name, options) {
+		options = options || {};
+
+		// If called with its own warning event handler, prefer that version instead of the one that might
+		// be configured via the outer scope
+		const hasLocalWarningHandler = typeof options.onWarning === 'function';
+		const hasGlobalWarningHandler = typeof onWarning === 'function';
+		if (hasGlobalWarningHandler && !hasLocalWarningHandler) {
+			options = Object.assign(options, { onWarning });
+		}
+
 		return realRequire(deps, baseModule, basePkg, middlewareName, name, options);
 	}
 
